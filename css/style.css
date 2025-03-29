@@ -1,0 +1,238 @@
+/* Basic Reset & Fullscreen Setup */
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #000; color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden; user-select: none; -webkit-user-select: none;
+            -moz-user-select: none; -ms-user-select: none;
+        }
+        #game-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #game-canvas { display: block; width: 100%; height: 100%; background-color: #000; cursor: crosshair; }
+
+        /* --- Top Bar --- */
+        #top-bar {
+            position: absolute; /* Position within game-container */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 45px; /* Adjust height as needed */
+            background-color: rgba(10, 20, 40, 0.8); /* Semi-transparent dark blue */
+            border-bottom: 1px solid #4080ff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Distribute items */
+            padding: 0 15px;
+            z-index: 10; /* Ensure it's above game canvas */
+            box-sizing: border-box; /* Include padding in width/height */
+        }
+        .top-bar-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* UI Elements */
+        .ui-element {
+            /* Removed position: absolute for elements moved to top bar */
+            /* Keep it for .tower-select as it needs absolute positioning */
+            z-index: 2;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+        }
+        /* Apply general styles to elements inside the top bar */
+        #top-bar .ui-element {
+            font-size: 15px; /* Smaller, consistent font size in top bar */
+            padding: 4px 8px;
+            margin: 0; /* Reset margins */
+            background-color: rgba(0,0,0,0.2); /* Subtle background for readability */
+            border-radius: 3px;
+        }
+        #score-display { color: #4080ff; /* Style specific to score */ }
+        #resources-display { color: #40ff80; transition: color 0.2s, transform 0.1s; /* Style specific to resources */ }
+        #resources-display.error { color: #ff4040; transform: scale(1.1); }
+        #wave-display { color: #ff4080; /* Style specific to wave */ }
+        #next-wave-timer { color: #ff8040; font-size: 14px; /* Style specific to timer */ }
+        #income-display { color: #40ff80; font-size: 14px; /* Style specific to income */ }
+        #health-bar-container {
+            /* Removed position: absolute, bottom, left */
+            position: relative; /* Keep relative for health-bar positioning inside */
+            width: 150px; /* Adjust size for top bar */
+            height: 16px;
+            background-color: #333;
+            border: 1px solid #4080ff;
+            margin: 0 5px; /* Add some spacing */
+            order: 10; /* Push towards the end of the right section */
+            /* Remove ui-element class background/padding if applied */
+            padding: 0;
+            background-color: #333; /* Re-apply background */
+        }
+        #health-bar { height: 100%; width: 100%; background-color: #4080ff; transition: width 0.3s, background-color 0.3s; }
+
+        /* Tower Selection & Tooltips */
+        .tower-select {
+            position: absolute; /* Keep absolute within game-container */
+            bottom: 10px;
+            left: 50%; /* Center horizontally */
+            transform: translateX(-50%); /* Fine-tune centering */
+            width: auto; /* Allow width based on content */
+            max-width: 80%; /* Prevent it from getting too wide */
+            display: flex;
+            flex-wrap: nowrap; /* Prevent wrapping, allow scroll if needed */
+            gap: 8px;
+            justify-content: center; /* Center icons within the bar */
+            max-height: 80px; /* Limit height */
+            overflow-x: auto; /* Enable horizontal scroll if needed */
+            overflow-y: hidden;
+            padding: 8px 15px;
+            background: rgba(0, 0, 0, 0.7); /* Slightly darker background */
+            border-radius: 8px;
+            z-index: 5; /* Ensure it's above canvas */
+         }
+        .tower-option {
+            width: 60px; height: 60px;
+            background-color: rgba(34, 34, 34, 0.8);
+            border: 2px solid #4080ff; display: flex; flex-direction: column;
+            justify-content: center; /* Center canvas vertically */
+            align-items: center; cursor: pointer; position: relative;
+            transition: all 0.2s; border-radius: 5px; flex-shrink: 0;
+            padding-top: 2px; /* Add padding for hotkey */
+        }
+        .tower-option:hover { border-color: #ff4080; transform: scale(1.08); background-color: rgba(50, 50, 50, 0.9); }
+        .tower-option.selected { border-color: #40ff80; box-shadow: 0 0 10px #40ff80; background-color: rgba(64, 255, 128, 0.2); }
+        .tower-option.disabled { cursor: not-allowed; opacity: 0.5; border-color: #555; }
+        .tower-option.disabled:hover { transform: none; background-color: rgba(34, 34, 34, 0.8); border-color: #555;}
+        .tower-cost {
+            margin-top: 0px; /* Reduced margin */
+            font-size: 10px; /* Slightly smaller */
+            color: #40ff80;
+            line-height: 1; /* Ensure it doesn't take too much space */
+            position: absolute; /* Position relative to parent */
+            bottom: 2px; /* Align to bottom */
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
+        .tower-icon-canvas {
+            width: 38px; /* Adjust size to fit better */
+            height: 38px;
+            display: block; /* Ensure it behaves as a block */
+            margin: 0 auto 10px auto; /* Center horizontally, add bottom margin for cost */
+        }
+        .tower-hotkey { position: absolute; top: 1px; left: 3px; font-size: 9px; color: #aaa; }
+
+        #tower-tooltip {
+            position: absolute; display: none; z-index: 15;
+            background-color: rgba(10, 20, 40, 0.9); border: 1px solid #4080ff;
+            padding: 10px; border-radius: 5px; font-size: 13px;
+            color: #eee; pointer-events: none; white-space: pre;
+            box-shadow: 0 0 8px rgba(64, 128, 255, 0.5); min-width: 180px; max-width: 250px;
+        }
+        #tower-tooltip strong { color: #80c0ff; }
+        #tower-tooltip .cost { color: #40ff80; }
+        #tower-tooltip .special { color: #ffc040; }
+        #tower-tooltip .buff { color: #40c0ff; }
+        #tower-tooltip .income { color: #40ff80; }
+
+
+        /* Tower Context Menu */
+        .tower-menu {
+            position: absolute; background-color: rgba(0, 0, 0, 0.9); border: 1px solid #4080ff;
+            padding: 8px; z-index: 5; display: none; border-radius: 4px; box-shadow: 0 0 10px rgba(64, 128, 255, 0.5);
+            min-width: 140px;
+        }
+        .menu-button, .target-priority-btn {
+            display: block; width: 100%; padding: 6px 10px; margin: 4px 0; background-color: #333;
+            color: #fff; border: 1px solid #555; cursor: pointer; text-align: left;
+            font-family: 'Courier New', Courier, monospace; font-size: 14px; border-radius: 3px; transition: background-color 0.2s;
+        }
+        .menu-button:hover, .target-priority-btn:hover { background-color: #4080ff; }
+        .menu-button:disabled { background-color: #444; color: #888; cursor: not-allowed; }
+
+        /* Start/Game Over/Pause Screens */
+        #game-over, #start-screen, #pause-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; background-color: rgba(0, 0, 0, 0.85);
+            z-index: 10; text-align: center; padding: 20px;
+        }
+        #game-over h1, #start-screen h1, #pause-screen h1 { font-size: clamp(32px, 5vw, 48px); margin-bottom: 20px; }
+        #start-screen h1 { color: #4080ff; text-shadow: 0 0 10px #4080ff; }
+        #game-over h1 { color: #ff4080; text-shadow: 0 0 10px #ff4080; }
+        #pause-screen h1 { color: #ffff40; text-shadow: 0 0 10px #ffff40; }
+        #game-over p, #start-screen p, #pause-screen p { color: #eee; font-size: clamp(16px, 2.5vw, 22px); margin-bottom: 20px; max-width: 80%; line-height: 1.5; }
+
+        button, .difficulty-btn {
+            background-color: #4080ff; color: #fff; border: none; padding: 12px 25px;
+            font-size: clamp(16px, 2vw, 20px); cursor: pointer; font-family: 'Courier New', Courier, monospace;
+            margin-top: 15px; text-transform: uppercase; letter-spacing: 2px; transition: all 0.2s;
+            border-radius: 5px; box-shadow: 0 0 5px rgba(64, 128, 255, 0.5);
+        }
+        button:hover, .difficulty-btn:hover { background-color: #ff4080; box-shadow: 0 0 15px #ff4080; transform: scale(1.05); }
+        button:active, .difficulty-btn:active { transform: scale(1.02); }
+        .difficulty-select { display: flex; margin-top: 20px; gap: 15px; }
+        .difficulty-btn { padding: 10px 20px; background-color: #333; border: 1px solid #4080ff; }
+        .difficulty-btn.selected { background-color: #4080ff; box-shadow: 0 0 10px #4080ff; }
+        #game-over { display: none; }
+        #pause-screen { display: none; }
+
+        /* Endless Mode Toggle */
+        .options-container { margin-top: 25px; display: flex; align-items: center; gap: 15px; }
+        #endless-mode-label { font-size: 16px; color: #ccc; cursor: pointer;}
+        #endless-mode-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #4080ff;}
+
+        /* Pause Button */
+        #pause-button {
+            /* Removed position: absolute, top, left, transform */
+            position: relative; /* Now relative within top-bar */
+            z-index: 3;
+            padding: 5px 12px; /* Adjusted padding */
+            font-size: 14px; background-color: rgba(255, 180, 0, 0.7); color: #000; border: 1px solid #ffb400;
+            box-shadow: none; min-width: auto; /* Reset min-width */
+            text-align: center;
+            border-radius: 4px;
+            order: 0; /* Place it centrally in its section */
+            /* Remove ui-element class styles if they conflict */
+            margin: 0;
+            text-shadow: none;
+        }
+        #pause-button:hover { background-color: rgba(255, 200, 50, 0.9); transform: scale(1.05); box-shadow: 0 0 8px #ffb400; }
+
+        /* Floating Text */
+        .floating-text {
+            position: absolute; font-size: 14px; font-weight: bold; pointer-events: none;
+            animation: floatUp 1s ease-out forwards; text-shadow: 1px 1px 2px #000;
+        }
+        .floating-text.damage { color: #ffdddd; }
+        .floating-text.shield-damage { color: #80c0ff; }
+        .floating-text.resource { color: #90ffb0; }
+        .floating-text.error { color: #ff6060; animation: floatUpAndFadeQuick 0.8s ease-out forwards; }
+        .floating-text.wave-bonus { color: #40ff80; font-size: 20px; animation-duration: 2s; }
+        .floating-text.wave-start { color: #ff8040; font-size: 24px; animation-duration: 2.5s; }
+        .floating-text.disable { color: #dda0dd; animation: floatUp 1.5s ease-out forwards; }
+
+
+        @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-40px); opacity: 0; } }
+        @keyframes floatUpAndFadeQuick { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-25px); opacity: 0; } }
+
+         /* Screen Flash Effect */
+        #screen-flash {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: red; opacity: 0; pointer-events: none; z-index: 99;
+            animation: flash 0.3s ease-out;
+        }
+        @keyframes flash { 0% { opacity: 0.3; } 100% { opacity: 0; } }
+
+         /* Disable Effect */
+        @keyframes disablePulse { 0% { opacity: 0.6; transform: scale(0.1); } 100% { opacity: 0; transform: scale(1.5); } }
+        .disable-effect-line { position: absolute; border-top: 2px dashed #dda0dd; opacity: 0.7; pointer-events: none; transform-origin: 0 0; animation: fadeOutLine 0.5s forwards; z-index: 4; }
+        @keyframes fadeOutLine { 0% { opacity: 0.7; } 100% { opacity: 0; } }
+
+        /* New Top Bar Styles */
+        #top-bar {
+            position: absolute; top: 0; left: 0; width: 100%; height: 60px; background-color: rgba(0, 0, 0, 0.7); border-bottom: 1px solid #4080ff; z-index: 3;
+        }
+        .top-bar-section {
+            display: flex; align-items: center; height: 100%;
+        }
+        .top-bar-section.left { justify-content: flex-start; padding-left: 10px; }
+        .top-bar-section.center { justify-content: center; }
+        .top-bar-section.right { justify-content: flex-end; padding-right: 10px; }
