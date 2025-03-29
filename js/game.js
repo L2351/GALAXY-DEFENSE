@@ -75,6 +75,7 @@
         const restartButton = document.getElementById('restart-button');
         const pauseButton = document.getElementById('pause-button');
         const resumeButton = document.getElementById('resume-button');
+        const mainMenuButton = document.getElementById('main-menu-button');
         const towerSelectContainer = document.querySelector('.tower-select');
         // Query all tower options again in case they change dynamically later
         // const towerOptions = document.querySelectorAll('.tower-option'); // Query dynamically if needed
@@ -130,6 +131,7 @@
             restartButton.addEventListener('click', restartGame);
             pauseButton.addEventListener('click', togglePause);
             resumeButton.addEventListener('click', togglePause);
+            mainMenuButton.addEventListener('click', returnToMainMenu);
             endlessModeCheckbox.addEventListener('change', () => { isEndlessMode = endlessModeCheckbox.checked; updateWaveDisplay(); });
         }
 
@@ -212,7 +214,7 @@
 
             updateScoreDisplay(); updateResourcesDisplay(); updateWaveDisplay(); // Initial display will show Wave 0
             updateIncomeDisplay(); updateHealthBar(); updateNextWaveTimerDisplay(0, false);
-            pauseButton.textContent = "PAUSE (P)";
+            pauseButton.textContent = "PAUSE (SPACE)";
             updateAllTowerOptionStatus();
         }
 
@@ -240,14 +242,14 @@
             if (!gameRunning || gameOver) return;
             gamePaused = !gamePaused;
             if (gamePaused) {
-                timeScale = 0; pauseScreen.style.display = 'flex'; pauseButton.textContent = "RESUME (P)";
+                timeScale = 0; pauseScreen.style.display = 'flex'; pauseButton.textContent = "RESUME (SPACE)";
                 cancelAnimationFrame(animationId);
                 redrawStaticElements();
                 drawEnemies(); drawProjectiles(); drawParticles(); drawResourceDrops(); drawMines(); drawActiveEffects();
                 drawTowerRange(selectedTower);
                 drawDisableEffects();
             } else {
-                timeScale = 1; pauseScreen.style.display = 'none'; pauseButton.textContent = "PAUSE (P)";
+                timeScale = 1; pauseScreen.style.display = 'none'; pauseButton.textContent = "PAUSE (SPACE)";
                 lastTime = performance.now();
                 requestAnimationFrame(gameLoop);
             }
@@ -463,7 +465,7 @@
         }
 
         function handleKeyDown(e) {
-             if (e.key.toUpperCase() === 'P') { e.preventDefault(); togglePause(); return; }
+             if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); togglePause(); return; }
              if (gamePaused || gameOver) return;
 
              let targetType = null;
@@ -1316,6 +1318,20 @@
 
         // --- Add CSS for screen shake ---
         const existingShakeStyle = document.querySelector('style[data-purpose="shake"]'); if (!existingShakeStyle) { const styleSheet = document.createElement("style"); styleSheet.dataset.purpose = "shake"; styleSheet.innerText = `@keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); } 20%, 40%, 60%, 80% { transform: translateX(4px); } }`; document.head.appendChild(styleSheet); }
+
+        function returnToMainMenu() {
+            // Cancel any game loops and reset the game state
+            cancelAnimationFrame(animationId);
+            resetGame(); // Reset game state
+            
+            // Hide game screens and show the start screen
+            pauseScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            startScreen.style.display = 'flex';
+            
+            // Redraw the static background elements for the start screen
+            redrawStaticElements();
+        }
 
         // --- Start ---
         window.addEventListener('load', init);
